@@ -10,24 +10,48 @@
 // stroke font, flat-colour scenes per story, and a home-grown PNG encoder.
 // No network, no clock, no randomness — two runs write the same bytes.
 //
-// The day's stories, as reported on 18 November 2026 (Reuters, AP and the
-// day's news digests):
-//   LEAD   Ukraine fires the biggest drone attack of the war — 1,441 drones
-//          over 22 regions by Moscow's count — and hits the Crimean Bridge
-//          for a second day, bringing its road arch down; Russia pounds
-//          Kyiv's bridges in reply.
-//   GULF   Iran and the US trade blows: drones target a US radar in Bahrain,
-//          US jets strike a missile site on Qeshm Island, Kuwait's air
-//          defences intercept hostile drones overnight, Bahrain all-clear.
-//   ASIA   Trump lands in Manila for ASEAN and Quad talks ahead of his China
-//          visit; Putin and Xi join him in Shenzhen on Thursday.
-//   STORM  Cyclone Akvan builds to a severe storm in the Bay of Bengal;
-//          Andhra Pradesh and Odisha on high alert, flights cancelled.
-//   TRADE  Canada and China extend trade deals as Xi meets Carney ahead of
-//          the APEC summit.
-//   TICKER Britain sanctions eight firms over West Bank settlements ·
-//          SpaceX catches a falling Starship · India beat Pakistan 2-1 for a
-//          record 10th SAFF title · COP31: LeadIT 3.0 launched.
+// The day's stories, as reported across the whole of 18 November 2026
+// (v2 — the full day, not just its first hours):
+//   LEAD   Ukraine's record drone storm: 1,441 drones over 22 regions, a
+//          second straight daily record, and the Crimean Bridge hit again —
+//          its 227-metre road arch in the Kerch Strait, rail stopped, the
+//          Azov shipping channel blocked. Zelenskyy calls it a seven-stage
+//          operation won with Ukrainian weapons; Russia pounds Kyiv's
+//          bridges in reply. (CNN, Reuters, Le Monde, BBC)
+//   GULF   US jets strike an IRGC missile site on Qeshm Island in
+//          self-defence after IRGC drones target the US radar at Bahrain's
+//          Sheikh Isa base — the third such raid in five days, all
+//          intercepted. Bahrain and Kuwait turn back fresh waves on
+//          Wednesday; three US carrier groups are now in the region.
+//          (AFP, Reuters, AP)
+//   ASIA   The Quad's first leaders' meeting in two years, in Manila:
+//          maritime patrol flights, undersea cables and AI agreed; Trump
+//          signs a Thailand trade deal and meets Marcos. Putin arrives in
+//          China; on Thursday Trump, Xi and Putin meet in Shenzhen at
+//          APEC. (BusinessWorld, SF Inquirer, Jakarta Post)
+//   MARKETS Wednesday's close: a global sell-off — S&P 500 7,340.53
+//          -1.03%, Nasdaq 24,328.38 -0.74%, FTSE 100 10,689.87 -1.76%,
+//          DAX 26,045.37 -2.08%, CAC 40 8,216.78 -1.62%, Nikkei 225
+//          59,024.28 +0.28%, Hang Seng 23,297.16 -0.90%, Brent $91.55
+//          -1.71%, gold $3,775 -2.31%, VIX 25.46 +11.13%. (Horizon wrap)
+//   BRIEFS Peltola wins Alaska's Senate seat — Democrats reach 56 (AP) ·
+//          Israel's president taps Eisenkot to form a government,
+//          passing over Netanyahu; Kahana is speaker, 66-52 (Reuters) ·
+//          Ebola in DR Congo more than doubles: 11,000 cases, 5,400 dead
+//          (UN) · the US loses its measles-free status after 26 years:
+//          5,400 cases, 10 deaths (CDC) · 19 dead as a Russian military
+//          plane crashes in Siberia's Kemerovo region · Zverev beats
+//          Shelton 6-2 7-6 to reach the ATP Finals semis; Fils fights
+//          back past Jodar for his first Finals win (ATP).
+//   WEATHER Cyclone Akvan turns severe in the Bay of Bengal — IMD red
+//          warning, landfall due Friday noon on the Andhra coast (IMD) ·
+//          Category 5 Cyclone Xavier hits the Northern Cook Islands ·
+//          a 6.0 quake rocks Papua New Guinea · COP31's human and social
+//          development day in Antalya.
+//   TICKER The World Court rules Thursday on the Myanmar genocide case ·
+//          Australia, Canada, Italy and the UK urge Israel to open every
+//          Gaza crossing as flooding bites · France sees a fourth
+//          weekend of living-cost protests.
 
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -318,6 +342,7 @@ const FONT: Record<string, Stroke[]> = {
   '=': [[[0.8, 2.2], [3.2, 2.2]], [[0.8, 3.8], [3.2, 3.8]]],
   '&': [[[3.4, 4.6], [2.2, 3.1], [1, 4.4], [1.2, 5.7], [2.6, 5.8], [3.6, 4.4]], [[2.2, 3.1], [3.2, 1.1], [2.7, 0.2], [1.5, 0.4], [1.1, 1.6], [2.2, 3.1]]],
   '%': [[[0.5, 0.9], [1, 0.3], [1.6, 0.9], [1.1, 1.5], [0.5, 0.9]], [[3.5, 0], [0.5, 6]], [[2.4, 5.1], [2.9, 4.5], [3.5, 5.1], [3, 5.7], [2.4, 5.1]]],
+  '$': [[[3.6, 1.1], [2.8, 0.2], [1.2, 0.2], [0.4, 1.1], [0.6, 2.3], [3.4, 3.7], [3.6, 4.9], [2.8, 5.8], [1.2, 5.8], [0.4, 4.9]], [[2, -0.4], [2, 6.4]]],
 };
 
 const GLYPH_W = 4;
@@ -455,10 +480,31 @@ function drawLeadScene(x: number, y: number, w: number, h: number): void {
 
   // The drone swarm, in loose formation, all heading right.
   const drones: [number, number, number][] = [
-    [0.1, 0.3, 13], [0.2, 0.18, 16], [0.3, 0.36, 11], [0.42, 0.22, 18],
-    [0.55, 0.34, 12], [0.66, 0.18, 15], [0.78, 0.3, 11],
+    [0.08, 0.3, 13], [0.17, 0.16, 16], [0.26, 0.38, 11], [0.36, 0.2, 18],
+    [0.47, 0.36, 12], [0.58, 0.16, 15], [0.68, 0.32, 11], [0.79, 0.2, 14],
+    [0.88, 0.38, 10],
   ];
   for (const [fx, fy, s] of drones) drawDrone(x + fx * w, y + fy * h, s);
+  // One Neptune missile rides its smoke trail down to the bridge.
+  const trail: [number, number][] = [
+    [x + w * 0.3, y + h * 0.44],
+    [x + w * 0.38, y + h * 0.5],
+    [x + w * 0.45, y + h * 0.55],
+    [x + w * 0.5, y + h * 0.6],
+  ];
+  polyline(trail, 2.2, [168, 178, 190]);
+  const mTip = trail[trail.length - 1];
+  const mTail = trail[trail.length - 2];
+  const mAng = Math.atan2(mTip[1] - mTail[1], mTip[0] - mTail[0]);
+  const mPts: [number, number][] = [];
+  for (const [along, side] of [[11, 0], [2, -3.4], [-9, -2.2], [-9, 2.2], [2, 3.4]] as [number, number][]) {
+    mPts.push([
+      mTip[0] + Math.cos(mAng) * along - Math.sin(mAng) * side,
+      mTip[1] + Math.sin(mAng) * along + Math.cos(mAng) * side,
+    ]);
+  }
+  fillPoly(mPts, [226, 232, 238]);
+  fillCircle(mTip[0] + Math.cos(mAng) * 13, mTip[1] + Math.sin(mAng) * 13, 3.2, FIRE);
 
   const seaY = y + h * 0.74;
   const deckY = y + h * 0.62;
@@ -468,6 +514,13 @@ function drawLeadScene(x: number, y: number, w: number, h: number): void {
   // Standing deck, left and right of the break.
   fillRect(x, deckY, w * 0.44, 9, STEEL);
   fillRect(x + w * 0.585, deckY + 4, w * 0.415, 9, STEEL);
+  // The rail deck runs above the road deck; a train waits, stopped, on it.
+  fillRect(x, deckY - 13, w * 0.44, 5, STEEL);
+  fillRect(x + w * 0.585, deckY - 9, w * 0.415, 5, STEEL);
+  for (let i = 0; i < 4; i++) {
+    fillRect(x + w * 0.06 + i * w * 0.085, deckY - 24, w * 0.07, 11, [148, 84, 72]);
+  }
+  fillRect(x + w * 0.06, deckY - 24, w * 0.045, 11, [70, 74, 82]);
   // Pylons.
   fillRect(x + w * 0.2, deckY + 9, 7, seaY - deckY - 4, STEEL);
   fillRect(x + w * 0.8, deckY + 13, 7, seaY - deckY - 4, STEEL);
@@ -679,18 +732,34 @@ function rule(y: number, h: number, c: RGB = INK): void {
 function panel(px: number, py: number, kicker: string, headline: string, dek: string, icon: (cx: number, cy: number, r: number, ink: RGB) => void): void {
   // Medallion with the story's icon, kicker beside it, then headline and dek
   // across the panel's full width.
-  const cx = px + 26;
-  const cy = py + 26;
-  fillCircle(cx, cy, 25, PAPER);
+  const cx = px + 24;
+  const cy = py + 24;
+  fillCircle(cx, cy, 23, PAPER);
   // ring
   for (let i = 0; i < 40; i++) {
     const a = (i / 40) * Math.PI * 2;
-    fillCircle(cx + Math.cos(a) * 25, cy + Math.sin(a) * 25, 1.6, INK);
+    fillCircle(cx + Math.cos(a) * 23, cy + Math.sin(a) * 23, 1.5, INK);
   }
-  icon(cx, cy, 21, INK);
-  drawText(kicker, px + 60, py + 17, 17.5, RED, { weight: 0.17, ls: 0.6 });
-  drawWrapped(headline, px, py + 58, 22, 27, 460, INK, { weight: 0.165 });
-  drawWrapped(dek, px, py + 116, 14.5, 18, 460, [58, 54, 46], { weight: 0.14 });
+  icon(cx, cy, 19, INK);
+  drawText(kicker, px + 56, py + 16, 15, RED, { weight: 0.17, ls: 0.6 });
+  drawWrapped(headline, px, py + 50, 19, 23, 460, INK, { weight: 0.165 });
+  drawWrapped(dek, px, py + 100, 12.5, 16, 460, [58, 54, 46], { weight: 0.14 });
+}
+
+// One market figure: name and the day's change on one line (change coloured,
+// right-aligned to the cell edge), the value beneath. Nothing can overrun
+// its neighbour.
+function marketCell(x: number, y: number, cellRight: number, name: string, value: string, change: string, up: boolean): void {
+  drawText(name, x, y, 9.5, [148, 164, 186], { weight: 0.15, ls: 0.5 });
+  drawText(change, cellRight, y, 9.5, up ? [110, 205, 130] : [232, 110, 100], { weight: 0.15, align: 'right' });
+  drawText(value, x, y + 12, 12.5, PAPER, { weight: 0.16 });
+}
+
+// One brief: red kicker, two-line headline, two-line wire summary.
+function brief(bx: number, by: number, kicker: string, headline: string, summary: string): void {
+  drawText(kicker, bx, by, 10.5, RED, { weight: 0.17, ls: 0.8 });
+  drawWrapped(headline, bx, by + 14, 14, 16.5, 296, INK, { weight: 0.16 });
+  drawWrapped(summary, bx, by + 49, 11, 13.5, 296, [58, 54, 46], { weight: 0.14 });
 }
 
 function compose(): void {
@@ -698,49 +767,97 @@ function compose(): void {
   strokeRect(16, 16, W - 32, H - 32, 5, INK);
   strokeRect(28, 28, W - 56, H - 56, 1.6, INK);
 
+  // Folio line: what this is, and where the news came from.
+  drawText('ONE PICTURE, ALL THE NEWS', LEFT, 42, 11.5, INK, { weight: 0.15, ls: 0.8 });
+  drawText('SOURCES: REUTERS • AP • AFP • CNN • BBC • IMD • UN', RIGHT, 42, 11.5, FAINT, { weight: 0.14, ls: 0.6, align: 'right' });
+  rule(58, 1.6);
+
   // Masthead.
-  drawText("THE DAY'S NEWS IN ONE PICTURE", LEFT, 46, 18, INK, { weight: 0.15, ls: 1.5 });
-  drawText('WEDNESDAY EDITION', RIGHT, 46, 18, INK, { weight: 0.15, ls: 1.5, align: 'right' });
-  rule(72, 1.6);
-  drawText('THE WORLD TODAY', W / 2, 84, 52, INK, { weight: 0.17, ls: 3, align: 'center' });
-  drawText('18 NOVEMBER 2026', W / 2, 148, 60, RED, { weight: 0.18, align: 'center' });
-  rule(222, 5);
-  rule(232, 1.6);
+  drawText('THE WORLD TODAY', W / 2, 68, 48, INK, { weight: 0.17, ls: 3, align: 'center' });
+  drawText('WEDNESDAY 18 NOVEMBER 2026', W / 2, 124, 28, RED, { weight: 0.17, ls: 1.5, align: 'center' });
+  rule(158, 5);
+  rule(168, 1.6);
+
+  // Weather strip: two centred lines of the day's sky and sea.
+  drawText('BAY OF BENGAL: CYCLONE AKVAN NOW SEVERE - RED WARNING, INDIA LANDFALL FRIDAY NOON', W / 2, 176, 11.5, INK, { weight: 0.145, ls: 0.4, align: 'center' });
+  drawText('XAVIER CATEGORY 5 HITS COOK ISLANDS • PNG ROCKED BY 6.0 QUAKE • COP31 TALKS RUN ON IN ANTALYA', W / 2, 191, 11.5, INK, { weight: 0.145, ls: 0.4, align: 'center' });
+  rule(204, 1.2);
 
   // Lead story.
-  drawText('UKRAINE WAR - EUROPE', LEFT, 246, 21, RED, { weight: 0.17, ls: 1 });
-  drawText('THE LEAD STORY', RIGHT, 246, 21, INK, { weight: 0.15, ls: 1, align: 'right' });
-  drawWrapped('UKRAINE UNLEASHES THE BIGGEST DRONE ATTACK OF THE WAR', LEFT, 280, 44, 53, CW, INK, { weight: 0.165 });
-  drawLeadScene(LEFT, 448, CW, 104);
+  drawText('UKRAINE WAR - EUROPE', LEFT, 214, 15, RED, { weight: 0.17, ls: 1 });
+  drawText('THE LEAD STORY', RIGHT, 214, 15, INK, { weight: 0.15, ls: 1, align: 'right' });
+  drawWrapped("RECORD DRONE STORM BRINGS DOWN PUTIN'S CRIMEA BRIDGE", LEFT, 240, 36, 44, CW, INK, { weight: 0.165 });
+  drawLeadScene(LEFT, 330, CW, 122);
   drawWrapped(
-    "CRIMEAN BRIDGE HIT FOR A SECOND DAY, ITS ARCH IN THE SEA - RUSSIA POUNDS KYIV'S BRIDGES IN REPLY",
-    LEFT, 564, 20, 26, CW, [58, 54, 46], { weight: 0.145 },
+    'STAFF ILLUSTRATION, AFTER SBU IMAGERY - ZELENSKYY CALLS IT A SEVEN-STAGE OPERATION, WON WITH UKRAINIAN WEAPONS: PALIANYTSIA DRONES, NEPTUNE AND FLAMINGO MISSILES.',
+    LEFT, 460, 11.5, 14.5, CW, FAINT, { weight: 0.14 },
   );
-  rule(622, 1.6);
+  drawWrapped(
+    '1,441 DRONES OVER 22 REGIONS - A SECOND STRAIGHT DAILY RECORD. THE ROAD ARCH LIES IN THE STRAIT; RAIL IS STOPPED AND THE AZOV CHANNEL BLOCKED.',
+    LEFT, 490, 14.5, 18.5, CW, [58, 54, 46], { weight: 0.145 },
+  );
+  rule(532, 1.6);
 
-  // Four panels, two by two.
-  const pw = 460;
-  const ph = 152;
+  // Two illustrated panels side by side.
   const gx = 520;
-  const rowY = [638, 798];
-  // Vertical divider between the columns.
-  fillRect(512, rowY[0], 1.4, ph * 2 + 8, FAINT);
-  fillRect(LEFT, rowY[0] + ph + 4, CW, 1.2, FAINT);
-  panel(LEFT, rowY[0], 'MIDDLE EAST - THE GULF', 'US AND IRAN TRADE BLOWS IN GULF',
-    'DRONES AIM AT US RADAR IN BAHRAIN; US JETS HIT QESHM; KUWAIT INTERCEPTS', iconRadar);
-  panel(gx, rowY[0], 'ASIA - SUMMIT WEEK', 'TRUMP IN MANILA FOR QUAD TALKS',
-    'ASEAN HOSTS IN MANILA BEFORE CHINA TRIP. PUTIN, XI NEXT IN SHENZHEN.', iconJet);
-  panel(LEFT, rowY[1], 'SOUTH ASIA - WEATHER', 'CYCLONE AKVAN NEARS INDIA COAST',
-    'SEVERE STORM BUILDS IN THE BAY OF BENGAL; TWO STATES ON HIGH ALERT.', iconCyclone);
-  panel(gx, rowY[1], 'WORLD - TRADE', 'CANADA AND CHINA EXTEND TRADE DEALS',
-    'XI MEETS CARNEY AHEAD OF APEC AS OTTAWA AND BEIJING WIDEN COOPERATION.', iconShip);
+  fillRect(512, 546, 1.4, 118, FAINT);
+  panel(LEFT, 546, 'MIDDLE EAST - THE GULF', 'US JETS HIT QESHM; IRAN DRONES SWARM BAHRAIN',
+    'RADAR RAID IS THE THIRD IN FIVE DAYS, ALL TURNED BACK; KUWAIT INTERCEPTS TOO.', iconRadar);
+  panel(gx, 546, 'ASIA - SUMMIT WEEK', 'QUAD FOUR AGREE PATROL FLIGHTS IN MANILA',
+    'PATROL FLIGHTS, CABLES AND AI AGREED. THURSDAY: TRUMP, XI, PUTIN IN SHENZHEN.', iconJet);
+  rule(680, 1.6);
+
+  // Markets band: the day's close, in the dark.
+  const my = 688;
+  fillRect(LEFT, my, CW, 62, NAVY);
+  drawText('MARKETS', LEFT + 12, my + 8, 13, GOLD, { weight: 0.17, ls: 1 });
+  drawText("WEDNESDAY'S", LEFT + 12, my + 30, 9.5, [148, 164, 186], { weight: 0.15, ls: 0.6 });
+  drawText('CLOSE', LEFT + 12, my + 42, 9.5, [148, 164, 186], { weight: 0.15, ls: 0.6 });
+  const cells: [string, string, string, boolean][] = [
+    ['S&P 500', '7,340.53', '-1.03%', false],
+    ['NASDAQ', '24,328.38', '-0.74%', false],
+    ['FTSE 100', '10,689.87', '-1.76%', false],
+    ['DAX', '26,045.37', '-2.08%', false],
+    ['CAC 40', '8,216.78', '-1.62%', false],
+    ['NIKKEI 225', '59,024.28', '+0.28%', true],
+    ['HANG SENG', '23,297.16', '-0.90%', false],
+    ['BRENT', '$91.55', '-1.71%', false],
+    ['GOLD', '$3,775', '-2.31%', false],
+    ['VIX', '25.46', '+11.13%', true],
+  ];
+  const cellW = (CW - 118) / 5;
+  for (let i = 0; i < cells.length; i++) {
+    const [name, value, change, up] = cells[i];
+    const cx = LEFT + 118 + (i % 5) * cellW;
+    const cy = my + (i < 5 ? 6 : 34);
+    marketCell(cx, cy, cx + cellW - 10, name, value, change, up);
+  }
+
+  // Briefs: six short stories in three columns of two.
+  drawText('AROUND THE WORLD - IN BRIEF', LEFT, 762, 11.5, RED, { weight: 0.17, ls: 1 });
+  drawText('DATELINES: KYIV - MANAMA - MANILA - ANTALYA - TURIN', RIGHT, 762, 11.5, FAINT, { weight: 0.14, ls: 0.6, align: 'right' });
+  const bxs = [LEFT, 364, 684];
+  fillRect(352, 784, 1.2, 150, FAINT);
+  fillRect(672, 784, 1.2, 150, FAINT);
+  brief(bxs[0], 784, 'US POLITICS', 'PELTOLA WINS ALASKA SENATE SEAT',
+    "AP CALL PUTS DEMOCRATS ON 56 SENATE SEATS.");
+  brief(bxs[0], 862, 'ISRAEL', 'EISENKOT TAPPED TO FORM GOVERNMENT',
+    'PRESIDENT PASSES OVER NETANYAHU; KAHANA WINS 66-52.');
+  brief(bxs[1], 784, 'HEALTH - CONGO', 'EBOLA DOUBLES IN CONGO: 11,000 CASES',
+    'UN COUNTS 5,400 DEAD IN 3 MONTHS; CHILDREN HIT HARDEST.');
+  brief(bxs[1], 862, 'US HEALTH', 'US LOSES MEASLES-FREE STATUS',
+    '5,400 CASES, 10 DEATHS END 26 YEARS OF ELIMINATION.');
+  brief(bxs[2], 784, 'DISASTER - SIBERIA', '19 DEAD IN SIBERIA PLANE CRASH',
+    'MILITARY AIRCRAFT DOWN IN KEMEROVO REGION.');
+  brief(bxs[2], 862, 'SPORT - TURIN', 'ZVEREV INTO TURIN SEMI-FINALS',
+    'BEATS SHELTON 6-2 7-6; FILS WINS FIRST FINALS MATCH.');
 
   // Ticker band: two wrapped lines inside the black.
-  const ty = 956;
-  fillRect(LEFT, ty, CW, 38, INK);
+  const ty = 946;
+  fillRect(LEFT, ty, CW, 36, INK);
   drawWrapped(
-    'UK SANCTIONS 8 FIRMS OVER WEST BANK SETTLEMENTS /// SPACEX CATCHES A FALLING STARSHIP /// INDIA BEAT PAKISTAN 2-1, RECORD 10TH SAFF TITLE',
-    LEFT + 12, ty + 4, 14.5, 17, CW - 24, PAPER, { weight: 0.145 },
+    'WORLD COURT RULES THURSDAY ON MYANMAR GENOCIDE CASE /// FOUR NATIONS URGE ISRAEL TO OPEN EVERY GAZA CROSSING /// FRANCE: FOURTH WEEKEND OF LIVING-COST PROTESTS',
+    LEFT + 12, ty + 4, 13, 16, CW - 24, PAPER, { weight: 0.145 },
   );
 }
 
